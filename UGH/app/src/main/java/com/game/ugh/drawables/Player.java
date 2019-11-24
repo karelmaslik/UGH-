@@ -4,24 +4,30 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.util.Log;
 
-import com.game.ugh.GameView;
+import androidx.constraintlayout.solver.widgets.Rectangle;
+
+import com.game.ugh.levels.Level;
+import com.game.ugh.levels.LevelStateController;
+import com.game.ugh.levels.TileType;
+import com.game.ugh.views.GameView;
 import com.game.ugh.R;
 import com.game.ugh.enums.Direction;
 import com.game.ugh.utility.GameUtility;
 import com.game.ugh.utility.PointD;
 
 import java.util.ArrayList;
-import java.util.List;
 
-public class Player
+public class Player implements IDrawable
 {
     private static Player instance;
     Context context;
 
     private Bitmap image;
     private Bitmap[] images;
+    private Bitmap[] flippedImages;
 
     private int currAnimIndex = 0;
     private int currAnimTimer = 0;
@@ -33,13 +39,15 @@ public class Player
     public double posY;
     public int width;
     public int height;
+
     private boolean groundCollision;
 
     private Direction directionVert;
     private Direction directionHoriz;
+
     private double velocity = 0;
     private double GRAVITY = 40;
-    private double LIFT_POWER = -0.3;
+    private double LIFT_POWER = -0.15;
     private final double UPPER_VEL_LIMIT = -10;
     private final double TERMINAL_VELOCITY = 25;
     private final double VELOCITY_COEFFICIENT = 0.0008;
@@ -50,6 +58,7 @@ public class Player
     public static boolean touchDetected = false;
     public static ArrayList<Float> accelValues = new ArrayList<>();
 
+    //TODO: split up player animation PNG to avoid glitching by a pixel at the end of the animation
     public Player(Context context)
     {
         double scale = 1.2;
@@ -59,14 +68,16 @@ public class Player
         int importHeight = (int)Math.floor(textureHeight * context.getResources().getDisplayMetrics().density);
         double ratio = importWidth / importHeight;
         this.images = new Bitmap[animLength];
+        this.flippedImages = new Bitmap[animLength];
         Bitmap source = BitmapFactory.decodeResource(context.getResources(), R.drawable.heli_rmk);
         for(int i = 0; i < animLength; i++)
         {
             this.images[i] = Bitmap.createBitmap(source, i * importWidth, 0, importWidth, importHeight);
             this.images[i] = Bitmap.createScaledBitmap(this.images[i], (int)Math.round(scale * importWidth), (int)Math.round(scale * importWidth / ratio), false);
-            this.width = (int)(scale * importWidth);
-            this.height = (int)(scale * importHeight);
+            this.flippedImages[i] = GameUtility.getInstance().flipBitmapHorizontally(images[i]);
         }
+        this.width = (int)this.images[0].getWidth();
+        this.height = this.images[0].getHeight();
         this.image = images[currAnimIndex];
         Player.instance = this;
     }
@@ -79,7 +90,7 @@ public class Player
         currAnimIndex = (int)Math.floor(currAnimTimer / singleAnimFrame);
 
         if(directionHoriz == Direction.LEFT)
-            return GameUtility.getInstance().flipBitmapHorizontally(images[currAnimIndex]);
+            return flippedImages[currAnimIndex];
         else
             return images[currAnimIndex];
     }
@@ -89,8 +100,20 @@ public class Player
         double movementVectorY = calculateVerticalMovement();
         double movementVectorX = calculateHorizontalMovement();
         PointD movementVector = new PointD(movementVectorX, movementVectorY);
-        boolean collisionDetected = handlePlayerBorderCollision(movementVector);
+        boolean collisionDetectedAtBorder = handlePlayerBorderCollision(movementVector);
+        boolean collisionDetectedTiles = handleLevelCollision(movementVector);
 
+        if(Math.abs(movementVector.x) < Level.getInstance().tileWidth / 2)
+        {
+            if(!groundCollision)
+                posX = posX + movementVector.x;
+        }
+        if(Math.abs(movementVector.y) < Level.getInstance().tileHeight / 2)
+            posY = posY + movementVector.y;
+
+        Rectangle movedHitbox = this.getPlayerHitbox(movementVector);
+        LevelStateController.getInstance().movedPlayerHitbox = movedHitbox;
+        Log.d("MOVEMENT", movementVector.x + " " + movementVector.y);
     }
 
     private double calculateHorizontalMovement()
@@ -106,9 +129,6 @@ public class Player
         float safeZone = 0.6f;
         float rightPoint = -5.0f;
         float leftPoint = 5.0f;
-
-        if(tilt < 0)
-            Log.d("SENSORS", String.valueOf(tilt));
 
         //RIGHT TILT
         if(tilt < -safeZone && tilt > rightPoint)
@@ -166,7 +186,6 @@ public class Player
             }
         }
 
-        Log.d("VELOCITY", String.valueOf(velocity));
         return movementVectorY;
     }
 
@@ -178,45 +197,163 @@ public class Player
     private boolean handlePlayerBorderCollision(PointD movementVector)
     {
         //TODO: end game state if velocity is too high and a collision happens
-        boolean collisionDetected = false;
+        boolean borderCollisionDetected = false;
         groundCollision = false;
         if(posY + movementVector.y + height > GameView.windowDimensions.y - BOTTOM_EDGE_BORDER_INCREASE)
         {
             posY = GameView.windowDimensions.y - height - BOTTOM_EDGE_BORDER_INCREASE;
+            borderCollisionDetected = true;
             groundCollision = true;
+            movementVector.y = 0;
         }
         else if(posY + movementVector.y < 0)
         {
             posY = 0;
-        }
-        else
-        {
-            posY += movementVector.y;
+            borderCollisionDetected = true;
+            movementVector.y = 0;
         }
         if(!groundCollision)
         {
             if(posX + movementVector.x + width > GameView.windowDimensions.x)
             {
                 posX = GameView.windowDimensions.x - width;
+                borderCollisionDetected = true;
+                movementVector.x = 0;
             }
             else if(posX + movementVector.x < 0)
             {
                 posX = 0;
-            }
-            else
-            {
-                posX += movementVector.x;
+                borderCollisionDetected = true;
+                movementVector.x = 0;
             }
         }
 
-
-        Log.d("POSITION", String.valueOf(posY));
-        return collisionDetected;
+        return borderCollisionDetected;
     }
 
-    public void drawPlayer(Canvas canvas)
+    private boolean handleLevelCollision(PointD movementVector)
+    {
+        boolean playerCollision = false;
+        Rectangle tilesToCheckForCollisions = getCollisionTilesToCheck(movementVector);
+        Rectangle playerHitbox = getPlayerHitbox(movementVector);
+        Level level = Level.getInstance();
+        extendCheckedBorders(tilesToCheckForCollisions);
+        PointD workMovVec = new PointD(movementVector.x, movementVector.y);
+        Double movVecXAdjustment = null;
+        Double movVecYAdjustment = null;
+
+        /*
+        for(int col = tilesToCheckForCollisions.x; col < tilesToCheckForCollisions.x + tilesToCheckForCollisions.width; col++)
+        {
+            for(int row = tilesToCheckForCollisions.y; row < tilesToCheckForCollisions.y + tilesToCheckForCollisions.height; row++)
+            {*/
+        for(int col = 0; col < level.width; col++)
+        {
+            for(int row = 0; row < level.height; row++)
+            {
+                if(level.levelTileTypes[col][row] == TileType.Collidable)
+                {
+                    Rectangle tileHitbox = new Rectangle();
+                    tileHitbox.setBounds(Math.round(col * level.tileWidth), Math.round(row * level.tileHeight), Math.round(level.tileWidth), Math.round(level.tileHeight));
+
+                    int safeguard = 3;
+                    if (playerHitbox.y + safeguard < tileHitbox.y + tileHitbox.height && playerHitbox.y + playerHitbox.height > tileHitbox.y + safeguard
+                                && playerHitbox.x + safeguard < tileHitbox.x + tileHitbox.width && playerHitbox.x + playerHitbox.width > tileHitbox.x + safeguard)
+                    {
+                        if(workMovVec.x > 0)
+                        {
+                            if(movVecXAdjustment == null || movVecXAdjustment > Math.abs(tileHitbox.x - (playerHitbox.x + playerHitbox.width)))
+                            {
+                                movVecXAdjustment = new Double(movementVector.x + (tileHitbox.x - (playerHitbox.x + playerHitbox.width)));
+                            }
+                        }
+                        else if(workMovVec.x < 0)
+                        {
+                            if(movVecXAdjustment == null || movVecXAdjustment > Math.abs((tileHitbox.x + tileHitbox.width) - playerHitbox.x))
+                            {
+                                movVecXAdjustment = new Double(movementVector.x + ((tileHitbox.x + tileHitbox.width) - playerHitbox.x));
+                            }
+                        }
+
+                        if(workMovVec.y > 0)
+                        {
+                            if(movVecYAdjustment == null || movVecYAdjustment > Math.abs(tileHitbox.y - (playerHitbox.y + playerHitbox.height)))
+                            {
+                                movVecYAdjustment = new Double(movementVector.y + (tileHitbox.y - (playerHitbox.y + playerHitbox.height)));
+                                groundCollision = true;
+                            }
+                        }
+                        else if(workMovVec.y < 0)
+                        {
+                            if(movVecYAdjustment == null || movVecYAdjustment > Math.abs(tileHitbox.y - (playerHitbox.y + playerHitbox.height)))
+                            {
+                                movVecYAdjustment = new Double(movementVector.y + ((tileHitbox.y + tileHitbox.height) - playerHitbox.y));
+                            }
+                        }
+                        if(movVecXAdjustment != null && movVecXAdjustment > level.tileWidth || movVecYAdjustment != null && movVecYAdjustment > level.tileHeight)
+                        {
+                            System.out.println();
+                        }
+                    }
+                }
+                else
+                    continue;
+            }
+        }
+
+        if(movVecXAdjustment != null && movVecXAdjustment < level.tileWidth / 2)
+            movementVector.x = movVecXAdjustment;
+        //else if(movVecXAdjustment != null)
+        //    movementVector.x = movVecXAdjustment / 20;
+        if(movVecYAdjustment != null && movVecYAdjustment < level.tileHeight / 2)
+            movementVector.y = movVecYAdjustment;
+        //else if(movVecYAdjustment != null)
+        //    movementVector.y = movVecXAdjustment / 20;
+
+        return playerCollision;
+    }
+
+    private Rectangle getCollisionTilesToCheck(PointD movementVector)
+    {
+        Rectangle collisionTilesRect = new Rectangle();
+        Level level = Level.getInstance();
+        int firstHorizontalTile = (int) Math.floor(posX / level.tileWidth);
+        int firstVerticalTile = (int) Math.floor(posY / level.tileHeight);
+        int width = (int) Math.ceil(this.width / level.tileWidth);
+        int height = (int) Math.ceil(this.height / level.tileHeight);
+
+        collisionTilesRect.setBounds(firstHorizontalTile, firstVerticalTile, width, height);
+        return collisionTilesRect;
+    }
+
+    private Rectangle getPlayerHitbox(PointD movementVector)
+    {
+        Rectangle playerHitbox = new Rectangle();
+        playerHitbox.setBounds((int)(posX + movementVector.x), (int)(posY + movementVector.y), width, height);
+
+        return playerHitbox;
+    }
+
+    public void extendCheckedBorders(Rectangle tilesToCheckForCollisions)
+    {
+        //Extending borders of needed collision checks by 1 if possible
+        if(tilesToCheckForCollisions.x > 0)
+            tilesToCheckForCollisions.x--;
+        if(tilesToCheckForCollisions.x + tilesToCheckForCollisions.width - 1 < Level.getInstance().width - 1)
+            tilesToCheckForCollisions.width++;
+        if(tilesToCheckForCollisions.y > 0)
+            tilesToCheckForCollisions.y--;
+        if(tilesToCheckForCollisions.y + tilesToCheckForCollisions.height - 1 < Level.getInstance().height - 1)
+            tilesToCheckForCollisions.height++;
+    }
+
+
+
+    public void draw(Canvas canvas)
     {
         canvas.drawBitmap(this.getCurrImage(), (int)this.posX, (int)this.posY, null);
     }
+
+
 
 }

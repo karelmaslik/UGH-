@@ -1,10 +1,10 @@
-package com.game.ugh;
-
-import androidx.appcompat.app.AppCompatActivity;
+package com.game.ugh.activities;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+
+import com.game.ugh.R;
 
 public class MainActivity extends Activity {
 

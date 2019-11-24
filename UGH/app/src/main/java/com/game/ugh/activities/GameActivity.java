@@ -1,17 +1,20 @@
-package com.game.ugh;
+package com.game.ugh.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.PixelFormat;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
 
+import com.game.ugh.R;
+import com.game.ugh.views.GameView;
 import com.game.ugh.drawables.Player;
 
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
@@ -32,6 +35,10 @@ public class GameActivity extends AppCompatActivity {
         this.gameView.setOnTouchListener(screenTouchListener);
         sensManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelSensor = sensManager.getDefaultSensor(TYPE_ACCELEROMETER);
+
+        int format = getWindow().getAttributes().format;
+        //set RGBA8888?
+        //getWindow().setAttributes();
     }
 
     @Override
