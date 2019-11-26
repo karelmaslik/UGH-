@@ -8,8 +8,17 @@ import android.widget.Toast;
 
 import androidx.constraintlayout.solver.widgets.Rectangle;
 
+import com.game.ugh.R;
 import com.game.ugh.drawables.Crate;
+import com.game.ugh.drawables.HotAirBalloon;
+import com.game.ugh.drawables.IEnemy;
+import com.game.ugh.drawables.Plane;
+import com.game.ugh.drawables.Player;
 import com.game.ugh.enums.CrateState;
+import com.game.ugh.enums.Direction;
+import com.game.ugh.utility.GameUtility;
+import com.game.ugh.utility.PointD;
+import com.game.ugh.views.GameView;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -20,6 +29,7 @@ public class LevelStateController
 
     public Context context;
     public Canvas canvas;
+    public Player player;
 
     Crate currCrate;
     public Rectangle movedPlayerHitbox;
@@ -27,13 +37,19 @@ public class LevelStateController
     Integer lastDeliverStation = null;
     ArrayList<Point> stations;
 
-
     int deliveredCrates = 0;
     int MAX_CRATES_PER_LEVEL = 5;
+
+    private long lastEnemySpawnTime;
+    private long spawnInterval = 15 * 1_000_000_000L;
+    private IEnemy enemy;
+    //private Plane plane;
+    //private HotAirBalloon balloon;
 
     private LevelStateController()
     {
         stations = Level.getInstance().stations;
+        lastEnemySpawnTime = GameUtility.getInstance().currTime + spawnInterval;
     }
 
     public static LevelStateController getInstance()
@@ -54,14 +70,119 @@ public class LevelStateController
         handleCrateDelivery();
         drawCrate();
 
+        handleEnemyDespawn();
+        handleEnemySpawn();
+        handleObstacles();
+    }
 
+    private void handleEnemySpawn()
+    {
+        if(enemy == null && GameUtility.getInstance().currTime - lastEnemySpawnTime > spawnInterval)
+        {
+            //Spawn random enemy, not using booleans for easier implementation of more enemies/obstacles in the future
+            Random rand = new Random(System.nanoTime());
+            int choiceEnemy = rand.nextInt();
+            Log.d("ENEMY", "Spawning plane");
 
+            if(choiceEnemy < 0)
+            {
+                int centerPlayerX = (int) Math.round(player.posX + player.width / 2);
 
+                if(centerPlayerX > GameView.windowDimensions.x / 2)
+                    spawnPlane(Direction.LEFT);
+                else
+                    spawnPlane(Direction.RIGHT);
+            }
+            else
+            {
+                int centerPlayerY = (int) Math.round(player.posY + player.height / 2);
+                if(centerPlayerY > GameView.windowDimensions.y / 2)
+                    spawnBalloon(Direction.UP);
+                else
+                    spawnBalloon(Direction.DOWN);
+            }
+        }
+    }
+
+    private void spawnPlane(Direction spawnDirection)
+    {
+        Random rand = new Random(System.nanoTime());
+        //Starting y position difference from the players y position
+        int yDiff = rand.nextInt() % (int) (3 * Level.getInstance().tileHeight);
+        int spawnX;
+        Plane plane = new Plane(context, 0, 0);
+        if(spawnDirection == Direction.LEFT)
+            spawnX = 0 - plane.width;
+        else
+            spawnX = GameView.windowDimensions.x + 1;
+        plane.setStartPos(spawnX, (int)(player.posY + yDiff));
+
+        float yDeviation = (rand.nextInt() % 100) / (float)1000;
+        yDeviation = (yDeviation < 0) ? (float)(yDeviation - 0.03) : (float) (yDeviation + 0.03);
+        double movX;
+        if(spawnDirection == Direction.LEFT)
+            movX = plane.MOVEMENT_VEL_X;
+        else
+            movX = -plane.MOVEMENT_VEL_X;
+        double movY = plane.MOVEMENT_VEL_Y * yDeviation;
+        plane.movementVector = new PointD(movX, movY);
+
+        this.enemy = (IEnemy) plane;
+        this.lastEnemySpawnTime = System.nanoTime();
+    }
+
+    private void spawnBalloon(Direction spawnDirection)
+    {
+        Random rand = new Random(System.nanoTime());
+        //Starting y position difference from the players y position
+        int xDiff = rand.nextInt() % (int) (3 * Level.getInstance().tileWidth);
+        int spawnY;
+        HotAirBalloon balloon = new HotAirBalloon(context, 0, 0);
+        if(spawnDirection == Direction.UP)
+            spawnY = 0 - balloon.height;
+        else
+            spawnY = GameView.windowDimensions.y + 1;
+        balloon.setStartPos((int) player.posX + xDiff, spawnY);
+
+        float xDeviation = (rand.nextInt() % 100) / (float)1000;
+        xDeviation = (xDeviation < 0) ? (float)(xDeviation - 0.03) : (float) (xDeviation + 0.03);
+        double movY;
+        if (spawnDirection == Direction.UP)
+        {
+            movY = balloon.MOVEMENT_VEL_X;
+        }
+        else
+        {
+            movY = -balloon.MOVEMENT_VEL_X;
+        }
+        double movX = balloon.MOVEMENT_VEL_Y * xDeviation;
+        balloon.movementVector = new PointD(movX, movY);
+
+        this.enemy = (IEnemy) balloon;
+        this.lastEnemySpawnTime = System.nanoTime();
+    }
+
+    private void handleObstacles()
+    {
+        if(enemy != null)
+        {
+            enemy.move();
+            enemy.draw(canvas);
+        }
+    }
+
+    private void handleEnemyDespawn()
+    {
+        if(enemy != null && enemy.isOutOfBounds())
+        {
+            enemy = null;
+            Log.d("ENEMY", "Despaned");
+        }
     }
 
     private void handleCrateCollection()
     {
-        if(checkCollision(movedPlayerHitbox, getCrateHitbox()))
+        if(checkCollision(movedPlayerHitbox, getCrateHitbox()) && Player.groundCollision == true)
         {
             currCrate.state = CrateState.PickedUp;
         }
@@ -69,14 +190,12 @@ public class LevelStateController
 
     private void handleCrateDelivery()
     {
-        if(checkCollision(movedPlayerHitbox, getStationHitbox(lastDeliverStation)) && currCrate.state == CrateState.PickedUp)
+        if(checkCollision(movedPlayerHitbox, getStationHitbox(lastDeliverStation)) && currCrate.state == CrateState.PickedUp && Player.groundCollision == true)
         {
             Log.wtf("DELIVERY", "Delivered");
             currCrate.state = CrateState.Delivered;
             deliveredCrates++;
         }
-
-
     }
 
     private void handleCrateSpawn()

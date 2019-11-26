@@ -40,7 +40,7 @@ public class Player implements IDrawable
     public int width;
     public int height;
 
-    private boolean groundCollision;
+    public static boolean groundCollision;
 
     private Direction directionVert;
     private Direction directionHoriz;

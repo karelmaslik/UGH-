@@ -10,6 +10,7 @@ import com.game.ugh.enums.CrateState;
 import com.game.ugh.levels.Level;
 import com.game.ugh.utility.GameUtility;
 import com.game.ugh.utility.PointD;
+import com.game.ugh.views.GameView;
 
 public class Plane implements IEnemy
 {
@@ -18,21 +19,25 @@ public class Plane implements IEnemy
     public int width;
     public int height;
 
+    private Context context;
     private Bitmap image;
-    private PointD movementVector;
+    private Bitmap imageFlippedRight;
+    public PointD movementVector;
 
-    public static double MOVEMENT_VEL_X = 10;
-    public static double MOVEMENT_VEL_Y = 1;
+    public static double MOVEMENT_VEL_X = 0.3;
+    public static double MOVEMENT_VEL_Y = 0.5;
 
     public Plane(Context context, int x, int y)
     {
+        this.context = context;
         Bitmap source = BitmapFactory.decodeResource(context.getResources(), R.drawable.plane);
-        double ratio = source.getWidth() / source.getHeight();
+        double ratio = (float)source.getWidth() / source.getHeight();
 
-        int height = (int) (3 * Level.getInstance().tileHeight);
+        int height = (int) (2.5 * Level.getInstance().tileHeight);
         int width = (int) (ratio * height);
 
         this.image = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.plane), width, height, false);
+        this.imageFlippedRight = GameUtility.getInstance().flipBitmapHorizontally(image);
         this.width = image.getWidth();
         this.height = image.getHeight();
 
@@ -44,19 +49,32 @@ public class Plane implements IEnemy
     @Override
     public void draw(Canvas canvas)
     {
-        canvas.drawBitmap(image, posX, posY, null);
+        if(movementVector.x > 0)
+            canvas.drawBitmap(imageFlippedRight, posX, posY, null);
+        else
+            canvas.drawBitmap(image, posX, posY, null);
     }
 
     @Override
     public void move()
     {
         int deltaTime = GameUtility.getInstance().getDeltaTime();
-        posX = (int) (posX + deltaTime * movementVector.x);
-        posY = (int) (posY + deltaTime * movementVector.y);
+        posX = (int) Math.round(posX + deltaTime * movementVector.x);
+        posY = (int) Math.round(posY + deltaTime * movementVector.y);
     }
 
     @Override
-    public boolean isOutOfBounds() {
-        return false;
+    public boolean isOutOfBounds()
+    {
+        if(posX + width < 0 || posX > GameView.windowDimensions.x)
+            return true;
+        else
+            return false;
+    }
+
+    public void setStartPos(int x, int y)
+    {
+        posX = x;
+        posY = y;
     }
 }

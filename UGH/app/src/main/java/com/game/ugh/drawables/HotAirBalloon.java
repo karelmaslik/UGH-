@@ -4,11 +4,13 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.util.Log;
 
 import com.game.ugh.R;
 import com.game.ugh.levels.Level;
 import com.game.ugh.utility.GameUtility;
 import com.game.ugh.utility.PointD;
+import com.game.ugh.views.GameView;
 
 public class HotAirBalloon implements IEnemy
 {
@@ -17,16 +19,16 @@ public class HotAirBalloon implements IEnemy
     public int width;
     public int height;
 
-    public static double MOVEMENT_VEL_X = 1;
-    public static double MOVEMENT_VEL_Y = 10;
+    public double MOVEMENT_VEL_X = 0.2;
+    public double MOVEMENT_VEL_Y = 0.4;
 
     private Bitmap image;
-    private PointD movementVector;
+    public PointD movementVector;
 
     public HotAirBalloon(Context context, int x, int y)
     {
-        Bitmap source = BitmapFactory.decodeResource(context.getResources(), R.drawable.hot_air_balloon_full);
-        double ratio = source.getWidth() / source.getHeight();
+        Bitmap source = BitmapFactory.decodeResource(context.getResources(), R.drawable.hot_air_balloon_small);
+        double ratio = (float)source.getWidth() / source.getHeight();
 
         int width = (int) (3 * Level.getInstance().tileWidth);
         int height = (int) (width / ratio);
@@ -52,13 +54,22 @@ public class HotAirBalloon implements IEnemy
     public void move()
     {
         int deltaTime = GameUtility.getInstance().getDeltaTime();
-        posX = (int) (posX + deltaTime * movementVector.x);
-        posY = (int) (posY + deltaTime * movementVector.y);
+        posX = (int) Math.round(posX + deltaTime * movementVector.x);
+        posY = (int) Math.round(posY + deltaTime * movementVector.y);
     }
 
     @Override
     public boolean isOutOfBounds()
     {
-        return false;
+        if(posY + height < 0 || posY > GameView.windowDimensions.y)
+            return true;
+        else
+            return false;
+    }
+
+    public void setStartPos(int x, int y)
+    {
+        posX = x;
+        posY = y;
     }
 }

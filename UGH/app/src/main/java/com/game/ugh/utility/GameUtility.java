@@ -8,8 +8,8 @@ import java.util.ArrayList;
 public class GameUtility
 {
     private static GameUtility instance;
-    private long lastTimeStamp;
-    private long currTime;
+    public long lastTimeStamp;
+    public long currTime;
     private int deltaTime;
 
     private GameUtility()

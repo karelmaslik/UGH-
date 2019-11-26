@@ -67,6 +67,7 @@ public class GameView extends View
         drawBackground(canvas);
         drawLevel(canvas);
         drawPlayer(canvas);
+        LevelStateController.getInstance().player = player;
         LevelStateController.getInstance().handleLevelChanges();
 
         //new Crate(getContext(), 6, 16).draw(canvas);
@@ -74,6 +75,8 @@ public class GameView extends View
         //new HotAirBalloon(getContext(), 800, 1000).draw(canvas);
 
         //TODO: reduce quality of balloon, reduce transparent borders
+
+
         invalidate();
     }
 
