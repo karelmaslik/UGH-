@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 
+import androidx.constraintlayout.solver.widgets.Rectangle;
+
 import com.game.ugh.R;
 import com.game.ugh.enums.CrateState;
 import com.game.ugh.levels.Level;
@@ -61,6 +63,14 @@ public class Plane implements IEnemy
         int deltaTime = GameUtility.getInstance().getDeltaTime();
         posX = (int) Math.round(posX + deltaTime * movementVector.x);
         posY = (int) Math.round(posY + deltaTime * movementVector.y);
+    }
+
+    @Override
+    public Rectangle getHitbox()
+    {
+        Rectangle hitbox = new Rectangle();
+        hitbox.setBounds(posX, posY, width, height);
+        return hitbox;
     }
 
     @Override

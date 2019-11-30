@@ -2,6 +2,7 @@ package com.game.ugh.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
@@ -14,6 +15,9 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.game.ugh.R;
+import com.game.ugh.levels.Level;
+import com.game.ugh.levels.UIController;
+import com.game.ugh.utility.GameUtility;
 import com.game.ugh.views.GameView;
 import com.game.ugh.drawables.Player;
 
@@ -30,15 +34,23 @@ public class GameActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setFullscreen();
-        gameView = new GameView(this);
-        setContentView(gameView);
-        this.gameView.setOnTouchListener(screenTouchListener);
+
+        setContentView(R.layout.activity_game);
+
+        UIController.getInstance().nextStation = findViewById(R.id.text_next_crate);
+        UIController.getInstance().totalCrates = findViewById(R.id.text_crates_total);
+        UIController.getInstance().timer = findViewById(R.id.text_duration);
+        UIController.getInstance().context = getApplicationContext();
+
+        gameView = findViewById(R.id.game_view);
+        gameView.setOnTouchListener(screenTouchListener);
+        int levelIndex = getIntent().getExtras().getInt("levelIndex");
+        gameView.init(getApplicationContext(), levelIndex);
+        //gameView = new GameView(this);
+        //setContentView(gameView);
+        //this.gameView.setOnTouchListener(screenTouchListener);
         sensManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelSensor = sensManager.getDefaultSensor(TYPE_ACCELEROMETER);
-
-        int format = getWindow().getAttributes().format;
-        //set RGBA8888?
-        //getWindow().setAttributes();
     }
 
     @Override
@@ -54,6 +66,12 @@ public class GameActivity extends AppCompatActivity {
     {
         super.onPause();
         sensManager.unregisterListener(sensorEventListener);
+        gameView = null;
+
+
+        Intent intent = new Intent(this, LevelSelectActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     private void setFullscreen()

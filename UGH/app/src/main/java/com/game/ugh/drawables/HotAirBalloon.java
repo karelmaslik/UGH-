@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.util.Log;
 
+import androidx.constraintlayout.solver.widgets.Rectangle;
+
 import com.game.ugh.R;
 import com.game.ugh.levels.Level;
 import com.game.ugh.utility.GameUtility;
@@ -65,6 +67,14 @@ public class HotAirBalloon implements IEnemy
             return true;
         else
             return false;
+    }
+
+    @Override
+    public Rectangle getHitbox()
+    {
+        Rectangle hitbox = new Rectangle();
+        hitbox.setBounds(posX, posY, width, height);
+        return hitbox;
     }
 
     public void setStartPos(int x, int y)

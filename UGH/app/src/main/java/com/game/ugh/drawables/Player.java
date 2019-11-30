@@ -9,6 +9,7 @@ import android.util.Log;
 
 import androidx.constraintlayout.solver.widgets.Rectangle;
 
+import com.game.ugh.enums.LossReason;
 import com.game.ugh.levels.Level;
 import com.game.ugh.levels.LevelStateController;
 import com.game.ugh.levels.TileType;
@@ -50,6 +51,7 @@ public class Player implements IDrawable
     private double LIFT_POWER = -0.15;
     private final double UPPER_VEL_LIMIT = -10;
     private final double TERMINAL_VELOCITY = 25;
+    private final double LOSS_VELOCITY = 20;
     private final double VELOCITY_COEFFICIENT = 0.0008;
     private final double HORIZONTAL_COEFFICIENT = 0.12;
     private final int ACCEL_VALUES_SMOOTHING_VALUES = 5;
@@ -103,6 +105,12 @@ public class Player implements IDrawable
         boolean collisionDetectedAtBorder = handlePlayerBorderCollision(movementVector);
         boolean collisionDetectedTiles = handleLevelCollision(movementVector);
 
+        if(groundCollision)
+        {
+            velocity = 0;
+            movementVector.y = 0;
+        }
+
         if(Math.abs(movementVector.x) < Level.getInstance().tileWidth / 2)
         {
             if(!groundCollision)
@@ -113,6 +121,8 @@ public class Player implements IDrawable
 
         Rectangle movedHitbox = this.getPlayerHitbox(movementVector);
         LevelStateController.getInstance().movedPlayerHitbox = movedHitbox;
+
+
         Log.d("MOVEMENT", movementVector.x + " " + movementVector.y);
     }
 
@@ -204,6 +214,8 @@ public class Player implements IDrawable
             posY = GameView.windowDimensions.y - height - BOTTOM_EDGE_BORDER_INCREASE;
             borderCollisionDetected = true;
             groundCollision = true;
+            if(movementVector.y > LOSS_VELOCITY)
+                LevelStateController.getInstance().setGameLost(LossReason.QuickFall);
             movementVector.y = 0;
         }
         else if(posY + movementVector.y < 0)
@@ -256,6 +268,7 @@ public class Player implements IDrawable
                     Rectangle tileHitbox = new Rectangle();
                     tileHitbox.setBounds(Math.round(col * level.tileWidth), Math.round(row * level.tileHeight), Math.round(level.tileWidth), Math.round(level.tileHeight));
 
+                    //This if checks for collision with a specific tile
                     int safeguard = 3;
                     if (playerHitbox.y + safeguard < tileHitbox.y + tileHitbox.height && playerHitbox.y + playerHitbox.height > tileHitbox.y + safeguard
                                 && playerHitbox.x + safeguard < tileHitbox.x + tileHitbox.width && playerHitbox.x + playerHitbox.width > tileHitbox.x + safeguard)
@@ -280,6 +293,11 @@ public class Player implements IDrawable
                             if(movVecYAdjustment == null || movVecYAdjustment > Math.abs(tileHitbox.y - (playerHitbox.y + playerHitbox.height)))
                             {
                                 movVecYAdjustment = new Double(movementVector.y + (tileHitbox.y - (playerHitbox.y + playerHitbox.height)));
+                                //Log.d("WINSTATE", String.valueOf(workMovVec.y));
+                                if(workMovVec.y > LOSS_VELOCITY)
+                                {
+                                    LevelStateController.getInstance().setGameLost(LossReason.QuickFall);
+                                }
                                 groundCollision = true;
                             }
                         }
@@ -289,10 +307,6 @@ public class Player implements IDrawable
                             {
                                 movVecYAdjustment = new Double(movementVector.y + ((tileHitbox.y + tileHitbox.height) - playerHitbox.y));
                             }
-                        }
-                        if(movVecXAdjustment != null && movVecXAdjustment > level.tileWidth || movVecYAdjustment != null && movVecYAdjustment > level.tileHeight)
-                        {
-                            System.out.println();
                         }
                     }
                 }
@@ -332,6 +346,11 @@ public class Player implements IDrawable
         playerHitbox.setBounds((int)(posX + movementVector.x), (int)(posY + movementVector.y), width, height);
 
         return playerHitbox;
+    }
+
+    public Rectangle getCurrentPlayerHitbox()
+    {
+        return getPlayerHitbox(new PointD(0, 0));
     }
 
     public void extendCheckedBorders(Rectangle tilesToCheckForCollisions)

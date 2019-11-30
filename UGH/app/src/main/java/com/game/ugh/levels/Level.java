@@ -41,11 +41,12 @@ public class Level
     private String CSV_DELIMITER = ",";
 
 
-    public Level(Context context)
+    public Level(Context context, int levelIndex)
     {
         Level.instance = this;
+        this.stations = new ArrayList<>();
         assetManager = context.getAssets();
-        loadLevelMatrix(1);
+        loadLevelMatrix(levelIndex + 1);
         tileResourceIDDict = new HashMap<>();
 
         tileResourceIDDict.put("0", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.grass_center), (int)tileWidth, (int)tileHeight, false));

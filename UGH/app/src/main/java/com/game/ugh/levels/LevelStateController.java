@@ -16,6 +16,7 @@ import com.game.ugh.drawables.Plane;
 import com.game.ugh.drawables.Player;
 import com.game.ugh.enums.CrateState;
 import com.game.ugh.enums.Direction;
+import com.game.ugh.enums.LossReason;
 import com.game.ugh.utility.GameUtility;
 import com.game.ugh.utility.PointD;
 import com.game.ugh.views.GameView;
@@ -43,13 +44,16 @@ public class LevelStateController
     private long lastEnemySpawnTime;
     private long spawnInterval = 15 * 1_000_000_000L;
     private IEnemy enemy;
-    //private Plane plane;
-    //private HotAirBalloon balloon;
+
+    private boolean gameWon = false;
+    private boolean gameLost = false;
+    private LossReason lossReason;
 
     private LevelStateController()
     {
         stations = Level.getInstance().stations;
         lastEnemySpawnTime = GameUtility.getInstance().currTime + spawnInterval;
+        currCrate = null;
     }
 
     public static LevelStateController getInstance()
@@ -63,6 +67,11 @@ public class LevelStateController
             return LevelStateController.instance;
     }
 
+    public void reset()
+    {
+        LevelStateController.instance = null;
+    }
+
     public void handleLevelChanges()
     {
         handleCrateSpawn();
@@ -73,7 +82,59 @@ public class LevelStateController
         handleEnemyDespawn();
         handleEnemySpawn();
         handleObstacles();
+
+        handleUICommunication();
+
+        handleWinLossConditions();
     }
+
+    private void handleUICommunication()
+    {
+        if(currCrate.state == CrateState.Waiting)
+            UIController.getInstance().setCrateInfo(CrateState.Waiting, lastSenderStation);
+        else
+            UIController.getInstance().setCrateInfo(CrateState.PickedUp, lastDeliverStation);
+
+        UIController.getInstance().setObjectiveInfo(deliveredCrates, MAX_CRATES_PER_LEVEL);
+    }
+
+    private void handleWinLossConditions()
+    {
+        if(gameWon)
+        {
+            handleGameWin();
+        }
+        else if(gameLost)
+        {
+            handleGameLoss();
+        }
+    }
+
+    private void handleGameLoss()
+    {
+        switch(this.lossReason)
+        {
+            case QuickFall:
+                Toast.makeText(context, "The helicopter broke!", Toast.LENGTH_LONG);
+                break;
+            case EnemyCollision:
+                Toast.makeText(context, "You collided with another air vehicle!", Toast.LENGTH_LONG);
+        }
+        if(this.lossReason != null)
+            Log.d("WINSTATE", String.valueOf(this.lossReason));
+    }
+
+    private void handleGameWin()
+    {
+
+    }
+
+    public void setGameLost(LossReason lossReason)
+    {
+        this.lossReason = lossReason;
+        this.gameLost = true;
+    }
+
 
     private void handleEnemySpawn()
     {
@@ -168,7 +229,10 @@ public class LevelStateController
         {
             enemy.move();
             enemy.draw(canvas);
+            if(checkCollision(player.getCurrentPlayerHitbox(), enemy.getHitbox(), 10))
+                setGameLost(LossReason.EnemyCollision);
         }
+
     }
 
     private void handleEnemyDespawn()
@@ -182,7 +246,7 @@ public class LevelStateController
 
     private void handleCrateCollection()
     {
-        if(checkCollision(movedPlayerHitbox, getCrateHitbox()) && Player.groundCollision == true)
+        if(checkCollision(movedPlayerHitbox, getCrateHitbox(), 0) && Player.groundCollision == true)
         {
             currCrate.state = CrateState.PickedUp;
         }
@@ -190,7 +254,7 @@ public class LevelStateController
 
     private void handleCrateDelivery()
     {
-        if(checkCollision(movedPlayerHitbox, getStationHitbox(lastDeliverStation)) && currCrate.state == CrateState.PickedUp && Player.groundCollision == true)
+        if(checkCollision(movedPlayerHitbox, getStationHitbox(lastDeliverStation), 0) && currCrate.state == CrateState.PickedUp && Player.groundCollision == true)
         {
             Log.wtf("DELIVERY", "Delivered");
             currCrate.state = CrateState.Delivered;
@@ -260,9 +324,8 @@ public class LevelStateController
         return stationHitbox;
     }
 
-    private boolean checkCollision(Rectangle hitbox1, Rectangle hitbox2)
+    private boolean checkCollision(Rectangle hitbox1, Rectangle hitbox2, int safeguard)
     {
-        int safeguard = 0;
         return hitbox1.y + safeguard < hitbox2.y + hitbox2.height && hitbox1.y + hitbox1.height > hitbox2.y + safeguard
                 && hitbox1.x + safeguard < hitbox2.x + hitbox2.width && hitbox1.x + hitbox1.width > hitbox2.x + safeguard;
     }

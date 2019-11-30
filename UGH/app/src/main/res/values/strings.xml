@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">UGH!</string>
+
+    <string name="play">PLAY!</string>
+    <string name="settings">SETTINGS</string>
+
+    <string name="total_boxes">X/X</string>
+    <string name="next_station">Del/Pick: X</string>
+    <string name="next_deliver_station_label">Deliver:</string>
+    <string name="next_pickup_station_label">Pick up:</string>
+    <string name="level_time">Time: XX:XX</string>
+    <string name="level_time_label">Time:</string>
+
+    <string name="level_select">Level Select</string>
 </resources>

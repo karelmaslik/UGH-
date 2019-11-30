@@ -10,8 +10,13 @@ import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.os.Bundle;
+import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Display;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.game.ugh.R;
 import com.game.ugh.drawables.Crate;
@@ -20,6 +25,7 @@ import com.game.ugh.drawables.Plane;
 import com.game.ugh.drawables.Player;
 import com.game.ugh.levels.Level;
 import com.game.ugh.levels.LevelStateController;
+import com.game.ugh.levels.UIController;
 import com.game.ugh.utility.GameUtility;
 
 public class GameView extends View
@@ -29,23 +35,33 @@ public class GameView extends View
 
     Display display;
     Level level;
-
-    public static Point windowDimensions = new Point();
-
     Player player;
 
-
+    public static Point windowDimensions = new Point();
 
     public GameView(Context context)
     {
         super(context);
-        background = BitmapFactory.decodeResource(getResources(), R.drawable.background1);
+    }
 
+    public GameView(Context context, AttributeSet attrs)
+    {
+        super(context, attrs);
+    }
+
+    public void init(Context context, int levelIndex)
+    {
+        GameUtility.getInstance().reset();
+
+        background = BitmapFactory.decodeResource(getResources(), R.drawable.background1);
+        GameUtility.getInstance().levelDuration = 0;
         display = ((Activity)getContext()).getWindowManager().getDefaultDisplay();
         //display.getSize(windowDimensions);
         display.getRealSize(windowDimensions);
 
-        level = new Level(context);
+        level = new Level(context, levelIndex);
+        LevelStateController.getInstance().reset();
+        //Level.getInstance().reset();
 
         player = new Player(context);
         player.posX = windowDimensions.x / 2 - player.width / 2;
@@ -55,20 +71,28 @@ public class GameView extends View
         bgFilter.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
 
         LevelStateController.getInstance().context = context;
-
     }
 
     @Override
     protected void onDraw(Canvas canvas)
     {
-        super.onDraw(canvas);
-        LevelStateController.getInstance().canvas = canvas;
-        GameUtility.getInstance().updateTimers();
-        drawBackground(canvas);
-        drawLevel(canvas);
-        drawPlayer(canvas);
-        LevelStateController.getInstance().player = player;
-        LevelStateController.getInstance().handleLevelChanges();
+        try
+        {
+            super.onDraw(canvas);
+            LevelStateController.getInstance().canvas = canvas;
+            GameUtility.getInstance().updateTimers();
+            drawBackground(canvas);
+            drawLevel(canvas);
+            drawPlayer(canvas);
+            LevelStateController.getInstance().player = player;
+            LevelStateController.getInstance().handleLevelChanges();
+            UIController.getInstance().update();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
 
         //new Crate(getContext(), 6, 16).draw(canvas);
         //new Plane(getContext(), 300, 300).draw(canvas);
