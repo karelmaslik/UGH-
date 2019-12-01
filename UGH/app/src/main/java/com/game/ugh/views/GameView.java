@@ -10,18 +10,12 @@ import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.os.Bundle;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Display;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.Button;
 
 import com.game.ugh.R;
-import com.game.ugh.drawables.Crate;
-import com.game.ugh.drawables.HotAirBalloon;
-import com.game.ugh.drawables.Plane;
 import com.game.ugh.drawables.Player;
 import com.game.ugh.levels.Level;
 import com.game.ugh.levels.LevelStateController;
@@ -53,6 +47,7 @@ public class GameView extends View
     {
         GameUtility.getInstance().reset();
 
+
         background = BitmapFactory.decodeResource(getResources(), R.drawable.background1);
         GameUtility.getInstance().levelDuration = 0;
         display = ((Activity)getContext()).getWindowManager().getDefaultDisplay();
@@ -65,13 +60,16 @@ public class GameView extends View
 
         player = new Player(context);
         player.posX = windowDimensions.x / 2 - player.width / 2;
-        player.posY = 0 - player.height;
+        player.posY = windowDimensions.y - player.BOTTOM_EDGE_BORDER_INCREASE - player.height;
 
         bgFilter = new Paint();
         bgFilter.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
 
         LevelStateController.getInstance().context = context;
     }
+
+
+
 
     @Override
     protected void onDraw(Canvas canvas)
@@ -87,6 +85,8 @@ public class GameView extends View
             LevelStateController.getInstance().player = player;
             LevelStateController.getInstance().handleLevelChanges();
             UIController.getInstance().update();
+
+
         }
         catch (Exception e)
         {

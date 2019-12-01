@@ -12,4 +12,10 @@
     <string name="level_time_label">Time:</string>
 
     <string name="level_select">Level Select</string>
+
+    <string name="victory">Victory!</string>
+    <string name="defeat">Defeat!</string>
+    <string name="levels">Levels</string>
+    <string name="leaderboard">Leaderboard</string>
+    <string name="restart">Restart</string>
 </resources>

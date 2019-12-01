@@ -55,7 +55,7 @@ public class Player implements IDrawable
     private final double VELOCITY_COEFFICIENT = 0.0008;
     private final double HORIZONTAL_COEFFICIENT = 0.12;
     private final int ACCEL_VALUES_SMOOTHING_VALUES = 5;
-    private final int BOTTOM_EDGE_BORDER_INCREASE = (int)(GameView.windowDimensions.y * 0.04);
+    public final int BOTTOM_EDGE_BORDER_INCREASE = (int)(GameView.windowDimensions.y * 0.04);
 
     public static boolean touchDetected = false;
     public static ArrayList<Float> accelValues = new ArrayList<>();
@@ -214,8 +214,9 @@ public class Player implements IDrawable
             posY = GameView.windowDimensions.y - height - BOTTOM_EDGE_BORDER_INCREASE;
             borderCollisionDetected = true;
             groundCollision = true;
-            if(movementVector.y > LOSS_VELOCITY)
-                LevelStateController.getInstance().setGameLost(LossReason.QuickFall);
+            //if(movementVector.y > LOSS_VELOCITY)
+            //    LevelStateController.getInstance().setGameLost(LossReason.QuickFall);
+            velocity = 0;
             movementVector.y = 0;
         }
         else if(posY + movementVector.y < 0)
@@ -298,6 +299,7 @@ public class Player implements IDrawable
                                 {
                                     LevelStateController.getInstance().setGameLost(LossReason.QuickFall);
                                 }
+                                velocity = 0;
                                 groundCollision = true;
                             }
                         }

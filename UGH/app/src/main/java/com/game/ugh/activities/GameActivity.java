@@ -10,31 +10,43 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 
 import com.game.ugh.R;
 import com.game.ugh.levels.Level;
 import com.game.ugh.levels.UIController;
 import com.game.ugh.utility.GameUtility;
+import com.game.ugh.views.DefeatDialog;
 import com.game.ugh.views.GameView;
 import com.game.ugh.drawables.Player;
+import com.game.ugh.views.VictoryDialog;
+
+import java.io.IOException;
 
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
 
-public class GameActivity extends AppCompatActivity {
+public class GameActivity extends AppCompatActivity implements MediaPlayer.OnPreparedListener {
 
     GameView gameView;
     SensorManager sensManager;
     Sensor accelSensor;
 
+    MediaPlayer mediaPlayer;
+    public static VictoryDialog victoryDialog;
+    public static DefeatDialog defeatDialog;
+    public static int lastPlayedLevel;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setFullscreen();
-
         setContentView(R.layout.activity_game);
 
         UIController.getInstance().nextStation = findViewById(R.id.text_next_crate);
@@ -44,13 +56,21 @@ public class GameActivity extends AppCompatActivity {
 
         gameView = findViewById(R.id.game_view);
         gameView.setOnTouchListener(screenTouchListener);
-        int levelIndex = getIntent().getExtras().getInt("levelIndex");
-        gameView.init(getApplicationContext(), levelIndex);
+        lastPlayedLevel = getIntent().getExtras().getInt("levelIndex");
+        gameView.init(getApplicationContext(), lastPlayedLevel);
         //gameView = new GameView(this);
         //setContentView(gameView);
         //this.gameView.setOnTouchListener(screenTouchListener);
         sensManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelSensor = sensManager.getDefaultSensor(TYPE_ACCELEROMETER);
+
+        victoryDialog = findViewById(R.id.victory_dialog);
+        defeatDialog = findViewById(R.id.defeat_dialog);
+
+        mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.arcade_music_loop);
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mediaPlayer.setLooping(true);
+        mediaPlayer.start();
     }
 
     @Override
@@ -67,11 +87,19 @@ public class GameActivity extends AppCompatActivity {
         super.onPause();
         sensManager.unregisterListener(sensorEventListener);
         gameView = null;
+        mediaPlayer.stop();
 
 
         Intent intent = new Intent(this, LevelSelectActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer player)
+    {
+        mediaPlayer.setLooping(true);
+        mediaPlayer.start();
     }
 
     private void setFullscreen()

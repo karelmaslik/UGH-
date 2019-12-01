@@ -1,14 +1,21 @@
 package com.game.ugh.levels;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.constraintlayout.solver.widgets.Rectangle;
 
 import com.game.ugh.R;
+import com.game.ugh.activities.GameActivity;
+import com.game.ugh.activities.MainActivity;
 import com.game.ugh.drawables.Crate;
 import com.game.ugh.drawables.HotAirBalloon;
 import com.game.ugh.drawables.IEnemy;
@@ -20,9 +27,12 @@ import com.game.ugh.enums.LossReason;
 import com.game.ugh.utility.GameUtility;
 import com.game.ugh.utility.PointD;
 import com.game.ugh.views.GameView;
+import com.game.ugh.views.VictoryDialog;
 
 import java.util.ArrayList;
 import java.util.Random;
+
+import static android.view.View.VISIBLE;
 
 public class LevelStateController
 {
@@ -54,6 +64,9 @@ public class LevelStateController
         stations = Level.getInstance().stations;
         lastEnemySpawnTime = GameUtility.getInstance().currTime + spawnInterval;
         currCrate = null;
+        gameLost = false;
+        gameWon = false;
+        lossReason = null;
     }
 
     public static LevelStateController getInstance()
@@ -100,6 +113,8 @@ public class LevelStateController
 
     private void handleWinLossConditions()
     {
+        if(deliveredCrates >= 1)
+            gameWon = true;
         if(gameWon)
         {
             handleGameWin();
@@ -122,11 +137,14 @@ public class LevelStateController
         }
         if(this.lossReason != null)
             Log.d("WINSTATE", String.valueOf(this.lossReason));
+
+        GameActivity.defeatDialog.layout.setVisibility(VISIBLE);
+        Log.d("WINSTATE", String.valueOf(this.lossReason));
     }
 
     private void handleGameWin()
     {
-
+        GameActivity.victoryDialog.layout.setVisibility(VISIBLE);
     }
 
     public void setGameLost(LossReason lossReason)
@@ -329,5 +347,6 @@ public class LevelStateController
         return hitbox1.y + safeguard < hitbox2.y + hitbox2.height && hitbox1.y + hitbox1.height > hitbox2.y + safeguard
                 && hitbox1.x + safeguard < hitbox2.x + hitbox2.width && hitbox1.x + hitbox1.width > hitbox2.x + safeguard;
     }
+
 
 }

@@ -3,3 +3,5 @@ Tile assets - kenney.nl
 Helicopter - https://opengameart.org/content/helicopter-2
 Hot air balloon - https://opengameart.org/content/hot-air-balloon
 Airplane - https://opengameart.org/content/pixel-art-2d-767-200
+
+Arcade Music Loop - https://freesound.org/people/joshuaempyre/sounds/251461/

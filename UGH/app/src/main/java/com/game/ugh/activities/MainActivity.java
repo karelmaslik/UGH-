@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.game.ugh.R;
+import com.game.ugh.views.VictoryDialog;
 
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
 
@@ -17,7 +18,6 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setFullscreen();
-
     }
 
     @Override

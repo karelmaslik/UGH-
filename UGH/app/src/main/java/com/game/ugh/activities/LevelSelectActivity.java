@@ -2,6 +2,7 @@ package com.game.ugh.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.os.Bundle;
@@ -30,6 +31,16 @@ public class LevelSelectActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        try
+        {
+            if(getIntent().getExtras().get("startLevel") != null)
+                startGame(GameActivity.lastPlayedLevel);
+        }
+        catch (Exception e)
+        {
+
+        }
+
         setContentView(R.layout.activity_level_select);
         setFullscreen();
 
@@ -57,6 +68,13 @@ public class LevelSelectActivity extends AppCompatActivity
         intent.putExtra("levelIndex", levelIndex);
         startActivity(intent);
         finish();
+    }
+
+    public static void startGame(int levelIndex, Context context)
+    {
+        Intent intent = new Intent(context, GameActivity.class);
+        intent.putExtra("levelIndex", levelIndex);
+        context.startActivity(intent);
     }
 
     public int getNumOfLevels()
