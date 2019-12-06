@@ -17,6 +17,8 @@ public class DefeatDialog extends ConstraintLayout
     public ConstraintLayout layout;
     private Button levels, restart;
 
+    public static boolean restartNeeded = false;
+
     public DefeatDialog(Context context)
     {
         super(context);
@@ -57,7 +59,9 @@ public class DefeatDialog extends ConstraintLayout
                 Intent intent = new Intent(context, LevelSelectActivity.class);
                 intent.putExtra("startLevel", true);
                 intent.putExtra("levelIndex", GameActivity.lastPlayedLevel);
+                restartNeeded = true;
                 context.startActivity(intent);
+
             }
         });
     }

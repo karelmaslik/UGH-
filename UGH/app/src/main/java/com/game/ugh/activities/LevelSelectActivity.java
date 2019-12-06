@@ -12,6 +12,7 @@ import android.widget.GridView;
 
 import com.game.ugh.R;
 import com.game.ugh.utility.LevelSelectAdapter;
+import com.game.ugh.views.DefeatDialog;
 
 import java.io.IOException;
 
@@ -34,7 +35,7 @@ public class LevelSelectActivity extends AppCompatActivity
         try
         {
             if(getIntent().getExtras().get("startLevel") != null)
-                startGame(GameActivity.lastPlayedLevel);
+                startGame(getIntent().getExtras().getInt("levelIndex"));
         }
         catch (Exception e)
         {
@@ -58,6 +59,12 @@ public class LevelSelectActivity extends AppCompatActivity
     {
         super.onResume();
         setFullscreen();
+
+        if(DefeatDialog.restartNeeded)
+        {
+            DefeatDialog.restartNeeded = false;
+            startGame(GameActivity.lastPlayedLevel);
+        }
     }
 
     public void startGame(int levelIndex)
@@ -65,7 +72,7 @@ public class LevelSelectActivity extends AppCompatActivity
         Intent intent = new Intent(this, GameActivity.class);
         intent.putExtra("levelIndex", levelIndex);
         startActivity(intent);
-
+        //finish();
     }
 
     public static void startGame(int levelIndex, Context context)

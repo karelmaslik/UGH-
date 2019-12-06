@@ -169,11 +169,8 @@ public class LevelStateController
             completionTime = completionTime / (float) 1000;
             database.execSQL("INSERT INTO Leaderboard(mapIndex, playerName, completionTime) VALUES(" + mapIndex + ", '" + playerName + "', " + completionTime + ");");
 
-            if(LeaderboardActivity.completionTime == null && LeaderboardActivity.mapNumber == null)
-            {
-                LeaderboardActivity.completionTime = completionTime;
-                LeaderboardActivity.mapNumber = mapIndex;
-            }
+            LeaderboardActivity.completionTime = completionTime;
+            LeaderboardActivity.mapNumber = mapIndex;
         }
 
         gameWinHandled = true;

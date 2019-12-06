@@ -48,18 +48,14 @@ public class LeaderboardActivity extends Activity {
 
         database = openOrCreateDatabase(DATABASE_NAME, MODE_PRIVATE,null);
         setupDatabase();
-        Log.d("Leaderboard", "Here 1");
         leaderboardAdapter = new LeaderboardAdapter(getApplicationContext());
         leaderboardLV = findViewById(R.id.leaderboard_list_view);
-
-        Bundle extras = getIntent().getExtras();
-        //int mapNumber = extras.getInt(MAP_NUMBER_INTENT_KEY);
-        //double completionTime = extras.getDouble(COMPLETION_TIME_INTENT_KEY);
-        String playerName = getCurrentPlayerName();
 
         //Clear this
         //mapNumber = 2;
         //completionTime = 2.353;
+        Log.d("Leaderboard", "Map num: " + mapNumber);
+        Log.d("Leaderboard", "Map num: " + completionTime);
         leaderboardAdapter.items.addAll(retrieveTop10(mapNumber));
         leaderboardAdapter.notifyDataSetChanged();
         leaderboardLV.setAdapter(leaderboardAdapter);
@@ -70,6 +66,9 @@ public class LeaderboardActivity extends Activity {
         String yourPositionS = getText(R.string.your_position) + " " + String.valueOf(retrievePlayerPosition(mapNumber, completionTime));
         yourTime.setText(yourTimeS);
         yourPosition.setText(yourPositionS);
+
+        completionTime = null;
+        mapNumber = null;
     }
 
     @Override
