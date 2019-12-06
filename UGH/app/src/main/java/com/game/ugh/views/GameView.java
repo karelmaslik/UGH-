@@ -31,6 +31,8 @@ public class GameView extends View
     Level level;
     Player player;
 
+    boolean firstLoop = true;
+
     public static Point windowDimensions = new Point();
 
     public GameView(Context context)
@@ -45,6 +47,7 @@ public class GameView extends View
 
     public void init(Context context, int levelIndex)
     {
+
         GameUtility.getInstance().reset();
 
 
@@ -76,30 +79,30 @@ public class GameView extends View
     {
         try
         {
-            super.onDraw(canvas);
-            LevelStateController.getInstance().canvas = canvas;
-            GameUtility.getInstance().updateTimers();
-            drawBackground(canvas);
-            drawLevel(canvas);
-            drawPlayer(canvas);
-            LevelStateController.getInstance().player = player;
-            LevelStateController.getInstance().handleLevelChanges();
-            UIController.getInstance().update();
+            if(!LevelStateController.getInstance().gameWon && !LevelStateController.getInstance().gameLost)
+            {
+                super.onDraw(canvas);
+                LevelStateController.getInstance().canvas = canvas;
+                GameUtility.getInstance().updateTimers();
+                drawBackground(canvas);
+                drawLevel(canvas);
+                drawPlayer(canvas);
+                LevelStateController.getInstance().player = player;
+                LevelStateController.getInstance().handleLevelChanges();
+                UIController.getInstance().update();
 
-
+                firstLoop = false;
+            }
+            else
+            {
+                super.onDraw(canvas);
+                canvas.drawBitmap(background, null, new Rect(0, 0, windowDimensions.x, windowDimensions.y), bgFilter);
+            }
         }
         catch (Exception e)
         {
             e.printStackTrace();
         }
-
-
-        //new Crate(getContext(), 6, 16).draw(canvas);
-        //new Plane(getContext(), 300, 300).draw(canvas);
-        //new HotAirBalloon(getContext(), 800, 1000).draw(canvas);
-
-        //TODO: reduce quality of balloon, reduce transparent borders
-
 
         invalidate();
     }

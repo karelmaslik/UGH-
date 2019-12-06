@@ -3,6 +3,8 @@ package com.game.ugh.levels;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.util.Log;
@@ -15,7 +17,9 @@ import androidx.constraintlayout.solver.widgets.Rectangle;
 
 import com.game.ugh.R;
 import com.game.ugh.activities.GameActivity;
+import com.game.ugh.activities.LeaderboardActivity;
 import com.game.ugh.activities.MainActivity;
+import com.game.ugh.activities.SettingsActivity;
 import com.game.ugh.drawables.Crate;
 import com.game.ugh.drawables.HotAirBalloon;
 import com.game.ugh.drawables.IEnemy;
@@ -42,22 +46,26 @@ public class LevelStateController
     public Canvas canvas;
     public Player player;
 
-    Crate currCrate;
+    private Crate currCrate;
     public Rectangle movedPlayerHitbox;
-    Integer lastSenderStation = null;
-    Integer lastDeliverStation = null;
-    ArrayList<Point> stations;
+    private Integer lastSenderStation = null;
+    private Integer lastDeliverStation = null;
+    private ArrayList<Point> stations;
 
-    int deliveredCrates = 0;
-    int MAX_CRATES_PER_LEVEL = 5;
+    private int deliveredCrates = 0;
+    private int MAX_CRATES_PER_LEVEL = 5;
 
     private long lastEnemySpawnTime;
-    private long spawnInterval = 15 * 1_000_000_000L;
+    private long spawnInterval = 12 * 1_000_000_000L;
     private IEnemy enemy;
 
-    private boolean gameWon = false;
-    private boolean gameLost = false;
+    public boolean gameWon = false;
+    public boolean gameLost = false;
     private LossReason lossReason;
+    private boolean gameWinHandled = false;
+    private boolean gameLossHandled = false;
+
+    public static int currLevelNumber;
 
     private LevelStateController()
     {
@@ -113,7 +121,7 @@ public class LevelStateController
 
     private void handleWinLossConditions()
     {
-        if(deliveredCrates >= 1)
+        if(deliveredCrates >= MAX_CRATES_PER_LEVEL)
             gameWon = true;
         if(gameWon)
         {
@@ -127,24 +135,48 @@ public class LevelStateController
 
     private void handleGameLoss()
     {
-        switch(this.lossReason)
+        if(!gameLossHandled)
         {
-            case QuickFall:
-                Toast.makeText(context, "The helicopter broke!", Toast.LENGTH_LONG);
-                break;
-            case EnemyCollision:
-                Toast.makeText(context, "You collided with another air vehicle!", Toast.LENGTH_LONG);
-        }
-        if(this.lossReason != null)
-            Log.d("WINSTATE", String.valueOf(this.lossReason));
+            switch(this.lossReason)
+            {
+                case QuickFall:
+                    //Toast.makeText(context, "The helicopter broke!", Toast.LENGTH_LONG).show();
+                    break;
+                case EnemyCollision:
+                    //Toast.makeText(context, "You collided with another air vehicle!", Toast.LENGTH_LONG).show();
+            }
+            if(this.lossReason != null)
+                Log.d("WINSTATE", String.valueOf(this.lossReason));
 
-        GameActivity.defeatDialog.layout.setVisibility(VISIBLE);
-        Log.d("WINSTATE", String.valueOf(this.lossReason));
+            GameActivity.defeatDialog.layout.setVisibility(VISIBLE);
+            Log.d("WINSTATE", String.valueOf(this.lossReason));
+        }
+
+        gameLossHandled = true;
     }
 
     private void handleGameWin()
     {
-        GameActivity.victoryDialog.layout.setVisibility(VISIBLE);
+        if(!gameWinHandled)
+        {
+            GameActivity.victoryDialog.layout.setVisibility(VISIBLE);
+
+            SQLiteDatabase database = context.openOrCreateDatabase(LeaderboardActivity.DATABASE_NAME, Context.MODE_PRIVATE, null);
+            SharedPreferences prefs = context.getSharedPreferences(SettingsActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
+            String playerName = prefs.getString(SettingsActivity.PLAYER_NAME_KEY, "lel");
+            int mapIndex = currLevelNumber;
+            double completionTime = GameUtility.getInstance().levelDuration / 1_000_000L;
+            completionTime = completionTime / (float) 1000;
+            database.execSQL("INSERT INTO Leaderboard(mapIndex, playerName, completionTime) VALUES(" + mapIndex + ", '" + playerName + "', " + completionTime + ");");
+
+            if(LeaderboardActivity.completionTime == null && LeaderboardActivity.mapNumber == null)
+            {
+                LeaderboardActivity.completionTime = completionTime;
+                LeaderboardActivity.mapNumber = mapIndex;
+            }
+        }
+
+        gameWinHandled = true;
     }
 
     public void setGameLost(LossReason lossReason)
@@ -200,10 +232,10 @@ public class LevelStateController
         yDeviation = (yDeviation < 0) ? (float)(yDeviation - 0.03) : (float) (yDeviation + 0.03);
         double movX;
         if(spawnDirection == Direction.LEFT)
-            movX = plane.MOVEMENT_VEL_X;
+            movX = Plane.MOVEMENT_VEL_X;
         else
-            movX = -plane.MOVEMENT_VEL_X;
-        double movY = plane.MOVEMENT_VEL_Y * yDeviation;
+            movX = -Plane.MOVEMENT_VEL_X;
+        double movY = Plane.MOVEMENT_VEL_Y * yDeviation;
         plane.movementVector = new PointD(movX, movY);
 
         this.enemy = (IEnemy) plane;

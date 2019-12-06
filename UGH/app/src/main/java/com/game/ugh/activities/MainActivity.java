@@ -2,6 +2,7 @@ package com.game.ugh.activities;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
 
@@ -18,6 +19,10 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setFullscreen();
+
+        SQLiteDatabase database = openOrCreateDatabase(LeaderboardActivity.DATABASE_NAME, MODE_PRIVATE,null);
+        //database.execSQL("DROP TABLE Leaderboard;");
+        database.execSQL("CREATE TABLE IF NOT EXISTS Leaderboard(id INTEGER PRIMARY KEY AUTOINCREMENT, mapIndex Integer, playerName VARCHAR, completionTime real);");
     }
 
     @Override
@@ -30,6 +35,12 @@ public class MainActivity extends Activity {
     public void launchLevelSelect(View view)
     {
         Intent intent = new Intent(this, LevelSelectActivity.class);
+        startActivity(intent);
+    }
+
+    public void launchSettings(View view)
+    {
+        Intent intent = new Intent(this, SettingsActivity.class);
         startActivity(intent);
     }
 

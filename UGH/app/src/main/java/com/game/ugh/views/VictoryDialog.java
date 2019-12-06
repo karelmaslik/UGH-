@@ -3,12 +3,14 @@ package com.game.ugh.views;
 import android.content.Context;
 import android.content.Intent;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.game.ugh.R;
+import com.game.ugh.activities.LeaderboardActivity;
 import com.game.ugh.activities.LevelSelectActivity;
 
 public class VictoryDialog extends ConstraintLayout
@@ -48,6 +50,14 @@ public class VictoryDialog extends ConstraintLayout
                 Intent intent = new Intent(context, LevelSelectActivity.class);
                 context.startActivity(intent);
 
+            }
+        });
+        leaderboard.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("Leaderboard", "Here");
+                Intent intent = new Intent(context, LeaderboardActivity.class);
+                context.startActivity(intent);
             }
         });
     }

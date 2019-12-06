@@ -38,7 +38,7 @@ public class LevelSelectActivity extends AppCompatActivity
         }
         catch (Exception e)
         {
-
+            e.printStackTrace();
         }
 
         setContentView(R.layout.activity_level_select);
@@ -51,8 +51,6 @@ public class LevelSelectActivity extends AppCompatActivity
         adapter = new LevelSelectAdapter(getApplicationContext(), numOfLevels);
         levSelGridView.setAdapter(adapter);
         levSelGridView.setOnItemClickListener(levelItemClickListener);
-
-
     }
 
     @Override
@@ -67,7 +65,7 @@ public class LevelSelectActivity extends AppCompatActivity
         Intent intent = new Intent(this, GameActivity.class);
         intent.putExtra("levelIndex", levelIndex);
         startActivity(intent);
-        finish();
+
     }
 
     public static void startGame(int levelIndex, Context context)

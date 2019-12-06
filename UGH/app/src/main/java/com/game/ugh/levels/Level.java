@@ -47,6 +47,7 @@ public class Level
         this.stations = new ArrayList<>();
         assetManager = context.getAssets();
         loadLevelMatrix(levelIndex + 1);
+        LevelStateController.currLevelNumber = levelIndex + 1;
         tileResourceIDDict = new HashMap<>();
 
         tileResourceIDDict.put("0", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.grass_center), (int)tileWidth, (int)tileHeight, false));

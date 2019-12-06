@@ -90,8 +90,8 @@ public class GameActivity extends AppCompatActivity implements MediaPlayer.OnPre
         mediaPlayer.stop();
 
 
-        Intent intent = new Intent(this, LevelSelectActivity.class);
-        startActivity(intent);
+        //Intent intent = new Intent(this, LevelSelectActivity.class);
+        //startActivity(intent);
         finish();
     }
 

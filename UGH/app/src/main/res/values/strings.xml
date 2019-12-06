@@ -18,4 +18,14 @@
     <string name="levels">Levels</string>
     <string name="leaderboard">Leaderboard</string>
     <string name="restart">Restart</string>
+    <string name="settings_init_cap">Settings</string>
+    <string name="player_name">Player name:</string>
+    <string name="confirm_settings">CONFIRM SETTINGS</string>
+
+    <string name="position_leaderboard">Pos.</string>
+    <string name="player_name_leaderboard">Player name</string>
+    <string name="time_leaderboard">Time</string>
+
+    <string name="your_time">Your completion time:</string>
+    <string name="your_position">Your position:</string>
 </resources>
